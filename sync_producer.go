@@ -30,6 +30,9 @@ type SyncProducer interface {
 	// scope, as it may otherwise leak memory. You must call this before calling
 	// Close on the underlying client.
 	Close() error
+
+	// Just for testing purpose
+	GetTransactionalManager() *transactionManager
 }
 
 type syncProducer struct {
@@ -146,4 +149,9 @@ func (sp *syncProducer) Close() error {
 	sp.producer.AsyncClose()
 	sp.wg.Wait()
 	return nil
+}
+
+// Just for testing purpose
+func (sp *syncProducer) GetTransactionalManager() *transactionManager {
+	return sp.producer.GetTransactionalManager()
 }

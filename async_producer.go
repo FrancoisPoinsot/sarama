@@ -45,6 +45,9 @@ type AsyncProducer interface {
 	// you can set Producer.Return.Errors in your config to false, which prevents
 	// errors to be returned.
 	Errors() <-chan *ProducerError
+
+	// Just for testing purpose
+	GetTransactionalManager() *transactionManager
 }
 
 // transactionManager keeps the state necessary to ensure idempotent production
@@ -59,6 +62,14 @@ const (
 	noProducerID    = -1
 	noProducerEpoch = -1
 )
+
+func (t *transactionManager) GetProducerID() int64 {
+	return t.producerID
+}
+
+func (t *transactionManager) GetProducerEpoch() int16 {
+	return t.producerEpoch
+}
 
 func (t *transactionManager) getAndIncrementSequenceNumber(topic string, partition int32) int32 {
 	key := fmt.Sprintf("%s-%d", topic, partition)
@@ -76,7 +87,7 @@ func newTransactionManager(conf *Config, client Client) (*transactionManager, er
 	}
 
 	if conf.Producer.Idempotent {
-		initProducerIDResponse, err := client.InitProducerID()
+		initProducerIDResponse, err := client.InitProducerID(conf.Producer.TransactionalID)
 		if err != nil {
 			return nil, err
 		}
@@ -266,6 +277,10 @@ func (p *asyncProducer) Successes() <-chan *ProducerMessage {
 
 func (p *asyncProducer) Input() chan<- *ProducerMessage {
 	return p.input
+}
+
+func (p *asyncProducer) GetTransactionalManager() *transactionManager {
+	return p.txnmgr
 }
 
 func (p *asyncProducer) Close() error {

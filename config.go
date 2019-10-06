@@ -166,6 +166,9 @@ type Config struct {
 		// written.
 		Idempotent bool
 
+		// Used in transactions to identify an instance of a producer through restarts
+		TransactionalID *string
+
 		// Return specifies what channels will be populated. If they are set to true,
 		// you must read from the respective channels to prevent deadlock. If,
 		// however, this config is used to create a `SyncProducer`, both must be set
