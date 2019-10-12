@@ -7,14 +7,14 @@ import (
 	"github.com/Shopify/sarama"
 )
 
-var brokers = []string{"localhost:9092"}
-var transactionalID = "my-consumer-0"
-var topic = "test-topic"
-
-//var consumerGroup = "my-consumer-group"
+var (
+	brokers         = []string{"localhost:9092"}
+	transactionalID = "my-consumer-0"
+	topic           = "test-topic"
+	commit          = true
+)
 
 func main() {
-
 	config := sarama.NewConfig()
 	config.Producer.Return.Successes = true
 	config.Producer.Idempotent = true
@@ -63,32 +63,11 @@ func main() {
 
 	transactionalManager := producer.GetTransactionalManager()
 
-	// AddPartitionsToTxn
-	{
-		addPartResponse, err := transactionCoordinator.AddPartitionsToTxn(&sarama.AddPartitionsToTxnRequest{
-			TransactionalID: transactionalID,
-			ProducerID:      transactionalManager.GetProducerID(),
-			ProducerEpoch:   transactionalManager.GetProducerEpoch(),
-			TopicPartitions: map[string][]int32{topic: {0}},
-		})
-		if err != nil {
-			log.Panic(err)
-		}
-		for _, results := range addPartResponse.Errors {
-			for _, partitionResult := range results {
-				if partitionResult.Err != sarama.ErrNoError {
-					spew.Dump(addPartResponse)
-					log.Panic()
-				}
-			}
-		}
-	}
-
 	msg := &sarama.ProducerMessage{
 		Topic: topic,
-		Value: sarama.StringEncoder("committed 1"),
+		Value: sarama.StringEncoder("some random message"),
 	}
-	_, _, err = producer.SendMessage(msg)
+	partition, _, err := producer.SendMessage(msg)
 	if err != nil {
 		log.Panic(err)
 	}
@@ -110,12 +89,33 @@ func main() {
 
 	// }
 
+	// AddPartitionsToTxn
+	{
+		addPartResponse, err := transactionCoordinator.AddPartitionsToTxn(&sarama.AddPartitionsToTxnRequest{
+			TransactionalID: transactionalID,
+			ProducerID:      transactionalManager.GetProducerID(),
+			ProducerEpoch:   transactionalManager.GetProducerEpoch(),
+			TopicPartitions: map[string][]int32{topic: {partition}},
+		})
+		if err != nil {
+			log.Panic(err)
+		}
+		for _, results := range addPartResponse.Errors {
+			for _, partitionResult := range results {
+				if partitionResult.Err != sarama.ErrNoError {
+					spew.Dump(addPartResponse)
+					log.Panic()
+				}
+			}
+		}
+	}
+
 	{
 		endTxnResp, err := transactionCoordinator.EndTxn(&sarama.EndTxnRequest{
 			TransactionalID:   transactionalID,
 			ProducerEpoch:     transactionalManager.GetProducerEpoch(),
 			ProducerID:        transactionalManager.GetProducerID(),
-			TransactionResult: false, //abort
+			TransactionResult: commit, // abort or commit
 		})
 		if err != nil {
 			log.Panic(err)
