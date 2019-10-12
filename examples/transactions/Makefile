@@ -18,11 +18,11 @@ broker:
 clean:
 	docker kill broker-test; docker rm broker-test
 
-.PHONY: read-commited
-read-commited:
+.PHONY: read-committed
+read-committed:
 	kafka-console-consumer --bootstrap-server localhost:9092 --topic test-topic --from-beginning --timeout-ms 2000 --isolation-level read_committed
 
-.PHONY: read-uncommited
-read-uncommited:
+.PHONY: read-uncommitted
+read-uncommitted:
 	kafka-console-consumer --bootstrap-server localhost:9092 --topic test-topic --from-beginning --timeout-ms 2000 --isolation-level read_uncommitted
 
