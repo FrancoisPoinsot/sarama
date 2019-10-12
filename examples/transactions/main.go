@@ -1,7 +1,6 @@
 package main
 
 import (
-	"github.com/davecgh/go-spew/spew"
 	"log"
 
 	"github.com/Shopify/sarama"
@@ -39,6 +38,8 @@ func main() {
 		log.Panic(err)
 	}
 
+	// Calling FindCoordinatorRequest is actually required even with only one broker
+	// Else you will get "coordinator does not exist for this transactionID" error.
 	var transactionCoordinator *sarama.Broker
 	{
 		result, err := controller.FindCoordinator(&sarama.FindCoordinatorRequest{
@@ -61,8 +62,6 @@ func main() {
 		log.Println(transactionCoordinator.Connected())
 	}
 
-	transactionalManager := producer.GetTransactionalManager()
-
 	msg := &sarama.ProducerMessage{
 		Topic: topic,
 		Value: sarama.StringEncoder("some random message"),
@@ -72,6 +71,7 @@ func main() {
 		log.Panic(err)
 	}
 
+	// I don't need to commit any consumer offset in this example; but if I had, it would look like:
 	// Add consumer offsets to transaction
 	// {
 	// 	addOffsetResponse, err := controller.AddOffsetsToTxn(&sarama.AddOffsetsToTxnRequest{
@@ -89,7 +89,9 @@ func main() {
 
 	// }
 
-	// AddPartitionsToTxn
+	transactionalManager := producer.GetTransactionalManager()
+
+	// AddPartitionsToTxn prepares the transaction coordinator to commit the topic/partitions where we just produced messages
 	{
 		addPartResponse, err := transactionCoordinator.AddPartitionsToTxn(&sarama.AddPartitionsToTxnRequest{
 			TransactionalID: transactionalID,
@@ -103,13 +105,13 @@ func main() {
 		for _, results := range addPartResponse.Errors {
 			for _, partitionResult := range results {
 				if partitionResult.Err != sarama.ErrNoError {
-					spew.Dump(addPartResponse)
-					log.Panic()
+					log.Panic(addPartResponse)
 				}
 			}
 		}
 	}
 
+	// Commit or abort the transaction
 	{
 		endTxnResp, err := transactionCoordinator.EndTxn(&sarama.EndTxnRequest{
 			TransactionalID:   transactionalID,
