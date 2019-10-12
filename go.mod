@@ -9,13 +9,13 @@ require (
 	github.com/eapache/go-xerial-snappy v0.0.0-20180814174437-776d5712da21
 	github.com/eapache/queue v1.1.0
 	github.com/fortytw2/leaktest v1.3.0
-	github.com/francoisPoinsot/sarama v1.16.0
 	github.com/frankban/quicktest v1.4.1 // indirect
 	github.com/golang/snappy v0.0.1 // indirect
 	github.com/hashicorp/go-uuid v1.0.1 // indirect
 	github.com/jcmturner/gofork v0.0.0-20190328161633-dc7c13fece03 // indirect
 	github.com/klauspost/compress v1.8.2
 	github.com/pierrec/lz4 v2.2.6+incompatible
+	github.com/pkg/errors v0.8.1
 	github.com/rcrowley/go-metrics v0.0.0-20181016184325-3113b8401b8a
 	github.com/stretchr/testify v1.3.0
 	github.com/xdg/scram v0.0.0-20180814205039-7eeb5667e42c
@@ -28,3 +28,5 @@ require (
 	gopkg.in/jcmturner/gokrb5.v7 v7.2.3
 	gopkg.in/jcmturner/rpc.v1 v1.1.0 // indirect
 )
+
+replace github.com/Shopify/sarama => ./

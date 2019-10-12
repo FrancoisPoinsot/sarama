@@ -3,6 +3,7 @@ package sarama
 import (
 	"encoding/binary"
 	"fmt"
+	"github.com/pkg/errors"
 	"sync"
 	"time"
 
@@ -87,10 +88,14 @@ func newTransactionManager(conf *Config, client Client) (*transactionManager, er
 	}
 
 	if conf.Producer.Idempotent {
-		initProducerIDResponse, err := client.InitProducerID(conf.Producer.TransactionalID)
+		initProducerIDResponse, err := client.InitProducerID(conf)
 		if err != nil {
 			return nil, err
 		}
+		if initProducerIDResponse.Err != ErrNoError {
+			return nil, errors.Errorf("error while initialazing producer ID %s", initProducerIDResponse.Err)
+		}
+
 		txnmgr.producerID = initProducerIDResponse.ProducerID
 		txnmgr.producerEpoch = initProducerIDResponse.ProducerEpoch
 		txnmgr.sequenceNumbers = make(map[string]int32)

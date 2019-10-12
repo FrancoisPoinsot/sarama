@@ -72,7 +72,7 @@ type Client interface {
 	RefreshCoordinator(consumerGroup string) error
 
 	// InitProducerID retrieves information required for Idempotent Producer
-	InitProducerID(transactionalID *string) (*InitProducerIDResponse, error)
+	InitProducerID(conf *Config) (*InitProducerIDResponse, error)
 
 	// Close shuts down all broker connections managed by this client. It is required
 	// to call this function before a client object passes out of scope, as it will
@@ -190,12 +190,13 @@ func (client *client) Brokers() []*Broker {
 	return brokers
 }
 
-func (client *client) InitProducerID(transactionalID *string) (*InitProducerIDResponse, error) {
+func (client *client) InitProducerID(conf *Config) (*InitProducerIDResponse, error) {
 	var err error
 	for broker := client.any(); broker != nil; broker = client.any() {
 
 		req := &InitProducerIDRequest{
-			TransactionalID: transactionalID,
+			TransactionalID:    conf.Producer.TransactionalID,
+			TransactionTimeout: conf.Producer.TransactionTimeout,
 		}
 
 		response, err := broker.InitProducerID(req)
