@@ -10,7 +10,7 @@ var (
 	brokers         = []string{"localhost:9092"}
 	transactionalID = "my-consumer-0"
 	topic           = "test-topic"
-	commit          = true
+	commit          = true // change this to either abort or commit the message
 )
 
 func main() {
