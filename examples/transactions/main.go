@@ -23,11 +23,6 @@ func main() {
 
 	config.Producer.TransactionalID = &transactionalID
 
-	producer, err := sarama.NewSyncProducer(brokers, config)
-	if err != nil {
-		log.Panic(err)
-	}
-
 	client, err := sarama.NewClient(brokers, config)
 	if err != nil {
 		log.Panic(err)
@@ -60,6 +55,11 @@ func main() {
 			log.Panic(err)
 		}
 		log.Println(transactionCoordinator.Connected())
+	}
+
+	producer, err := sarama.NewSyncProducer(brokers, config)
+	if err != nil {
+		log.Panic(err)
 	}
 
 	msg := &sarama.ProducerMessage{
